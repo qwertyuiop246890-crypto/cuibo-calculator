@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>日圓 → 台幣 代購計算機（進階版）</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="日本代購專用進階計算機：匯率、代購費、運費、刷卡、營業稅、自動計算總成本與實際利潤。">
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#111827" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="app-title">
+      <h1>🇯🇵 日圓 → 台幣 代購計算機</h1>
+      <p class="subtitle">進階版：含代購費、運費、刷卡、營業稅、實際利潤</p>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <section class="card">
+      <h2>基本資料</h2>
+      <div class="field">
+        <label for="priceJpy">商品價格（日圓）</label>
+        <input id="priceJpy" type="number" inputmode="decimal" placeholder="例如：1500" />
+      </div>
+
+      <div class="field two-col">
+        <div>
+          <label for="rate">匯率（TWD / 100 JPY）</label>
+          <input id="rate" type="number" inputmode="decimal" placeholder="例如：22.5" />
+        </div>
+        <div>
+          <label for="foreignFee">國外交易手續費（%）</label>
+          <input id="foreignFee" type="number" inputmode="decimal" placeholder="例如：1.5" />
+        </div>
+      </div>
+
+      <div class="field two-col">
+        <div>
+          <label for="daigouFee">代購費（%）<span class="tag tag-cost">視為成本</span></label>
+          <input id="daigouFee" type="number" inputmode="decimal" placeholder="例如：10" />
+        </div>
+        <div>
+          <label for="profitRate">額外利潤率（%）</label>
+          <input id="profitRate" type="number" inputmode="decimal" placeholder="例如：5" />
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>運費與金流</h2>
+      <div class="field two-col">
+        <div>
+          <label for="weight">預估重量（g）</label>
+          <input id="weight" type="number" inputmode="decimal" placeholder="例如：300" />
+        </div>
+        <div>
+          <label for="shipPerGram">每克運費（TWD / g）</label>
+          <input id="shipPerGram" type="number" inputmode="decimal" placeholder="例如：0.12" />
+        </div>
+      </div>
+
+      <div class="field two-col">
+        <div>
+          <label for="cardFee">刷卡手續費（%）</label>
+          <input id="cardFee" type="number" inputmode="decimal" placeholder="例如：2.5" />
+        </div>
+        <div>
+          <label for="taxRate">營業稅（%）</label>
+          <input id="taxRate" type="number" inputmode="decimal" placeholder="例如：5" />
+        </div>
+      </div>
+
+      <div class="buttons">
+        <button id="calcBtn">重新計算</button>
+        <button id="resetBtn" class="secondary">清除</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>成本明細</h2>
+      <div class="result-row">
+        <span>商品成本（台幣）</span>
+        <span id="rItemCost">-</span>
+      </div>
+      <div class="result-row">
+        <span>國外交易手續費</span>
+        <span id="rForeignFee">-</span>
+      </div>
+      <div class="result-row">
+        <span>台幣成本（商品＋國外手續費）</span>
+        <span id="rBaseCost">-</span>
+      </div>
+      <div class="result-row">
+        <span>代購費（視為成本）</span>
+        <span id="rDaigouCost">-</span>
+      </div>
+      <div class="result-row">
+        <span>運費（估）</span>
+        <span id="rShipCost">-</span>
+      </div>
+      <div class="result-row">
+        <span>刷卡手續費</span>
+        <span id="rCardCost">-</span>
+      </div>
+      <div class="result-row">
+        <span>營業稅金</span>
+        <span id="rTaxCost">-</span>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="result-row total-strong">
+        <span>🔥 最終總成本（含代購＋運費＋刷卡＋稅）</span>
+        <span id="rTotalCost">-</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>售價與實際利潤</h2>
+      <div class="result-row">
+        <span>含代購＋利潤售價（未稅未含運）</span>
+        <span id="rSellNoShipNoTax">-</span>
+      </div>
+      <div class="result-row">
+        <span>含運售價（未稅）</span>
+        <span id="rSellNoTax">-</span>
+      </div>
+      <div class="result-row">
+        <span>刷卡後金額（未稅）</span>
+        <span id="rAfterCardNoTax">-</span>
+      </div>
+      <div class="result-row">
+        <span>最終售價（含稅）</span>
+        <span id="rFinalPrice">-</span>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="result-row profit">
+        <span>💰 實際利潤</span>
+        <span id="rRealProfit">-</span>
+      </div>
+      <div class="result-row profit">
+        <span>📈 實際利潤率（相對總成本）</span>
+        <span id="rRealProfitRate">-</span>
+      </div>
+    </section>
+
+    <section class="card small">
+      <h2>備註</h2>
+      <ul class="note-list">
+        <li>％欄位請直接輸入數字，例如 10% 輸入「10」。</li>
+        <li>代購費在本工具中視為「成本」，方便你計算時間與風險都被涵蓋在總成本內。</li>
+        <li>實際利潤 = 最終售價（含稅） − 最終總成本。</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p>Made with ❤️ for 日本代購與自用記帳 · v2</p>
+  </footer>
+
+  <script src="script.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('./sw.js').catch(function(err) {
+          console.log('SW registration failed:', err);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
