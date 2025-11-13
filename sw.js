@@ -1,10 +1,12 @@
-const CACHE_NAME = 'jp2twd-pwa-v2';
+const CACHE_NAME = 'cuibo-calc-v3';
 const ASSETS = [
   './',
   './index.html',
   './style.css',
   './script.js',
-  './manifest.json'
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png'
 ];
 
 self.addEventListener('install', (event) => {

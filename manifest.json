@@ -1,9 +1,9 @@
 {
-  "name": "日圓 → 台幣 代購計算機（進階版）",
-  "short_name": "JP2TWD Pro",
+  "name": "CuiBo價格計算機",
+  "short_name": "CuiBo Calc",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#020617",
+  "background_color": "#91d8f6",
   "theme_color": "#111827",
   "icons": [
     {

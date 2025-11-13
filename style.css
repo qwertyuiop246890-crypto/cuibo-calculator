@@ -29,12 +29,6 @@ body {
   font-size: 1.3rem;
 }
 
-.app-title .subtitle {
-  margin: 4px 0 0;
-  font-size: 0.8rem;
-  color: #9ca3af;
-}
-
 .app-main {
   padding: 8px 12px 80px;
   max-width: 640px;
@@ -58,6 +52,11 @@ body {
   margin: 0 0 10px;
   font-size: 1rem;
   color: #f9fafb;
+}
+
+.card.highlight {
+  border-color: rgba(248, 250, 252, 0.35);
+  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.55);
 }
 
 .field {
@@ -147,6 +146,12 @@ button:active {
   color: #f9fafb;
 }
 
+.main-price span:last-child {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #4ade80;
+}
+
 .total-strong {
   margin-top: 4px;
   padding-top: 6px;
@@ -176,21 +181,6 @@ button:active {
 
 .note-list li {
   margin-bottom: 2px;
-}
-
-.tag {
-  display: inline-flex;
-  align-items: center;
-  padding: 1px 6px;
-  border-radius: 999px;
-  font-size: 0.65rem;
-  margin-left: 4px;
-}
-
-.tag-cost {
-  background: rgba(248, 250, 252, 0.1);
-  color: #f97316;
-  border: 1px solid rgba(249, 115, 22, 0.8);
 }
 
 .app-footer {

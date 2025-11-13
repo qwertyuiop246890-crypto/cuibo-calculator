@@ -28,7 +28,7 @@ function formatPercent(v) {
 function calc() {
   // inputs
   const priceJpy = parseNumber(document.getElementById('priceJpy').value);
-  const ratePer100 = parseNumber(document.getElementById('rate').value);
+  const rate = parseNumber(document.getElementById('rate').value); // 每 1 日圓 = ? 元台幣
   const foreignFeePct = parsePercent(document.getElementById('foreignFee').value);
   const daigouFeePct = parsePercent(document.getElementById('daigouFee').value);
   const profitRatePct = parsePercent(document.getElementById('profitRate').value);
@@ -36,9 +36,6 @@ function calc() {
   const shipPerGram = parseNumber(document.getElementById('shipPerGram').value);
   const cardFeePct = parsePercent(document.getElementById('cardFee').value);
   const taxRatePct = parsePercent(document.getElementById('taxRate').value);
-
-  // 匯率：使用 TWD / 100 JPY，方便輸入
-  const rate = ratePer100 / 100;
 
   // 商品成本（台幣）
   const itemCostTwd = priceJpy * rate;
@@ -83,7 +80,7 @@ function calc() {
   const realProfit = finalPrice - totalCost;
   const realProfitRate = totalCost > 0 ? realProfit / totalCost : 0;
 
-  // 輸出
+  // 詳細輸出
   document.getElementById('rItemCost').textContent = formatCurrency1(itemCostTwd);
   document.getElementById('rForeignFee').textContent = formatCurrency1(foreignFeeTwd);
   document.getElementById('rBaseCost').textContent = formatCurrency1(baseCostTwd);
@@ -99,6 +96,13 @@ function calc() {
   document.getElementById('rFinalPrice').textContent = formatCurrency(finalPrice);
   document.getElementById('rRealProfit').textContent = formatCurrency(realProfit);
   document.getElementById('rRealProfitRate').textContent = formatPercent(realProfitRate);
+
+  // 總覽卡片輸出
+  document.getElementById('sFinalPrice').textContent = formatCurrency(finalPrice);
+  document.getElementById('sNoTax').textContent = formatCurrency1(sellNoTax);
+  document.getElementById('sTotalCost').textContent = formatCurrency(totalCost);
+  document.getElementById('sProfit').textContent = formatCurrency(realProfit);
+  document.getElementById('sProfitRate').textContent = formatPercent(realProfitRate);
 }
 
 function resetAll() {
@@ -114,7 +118,8 @@ function resetAll() {
     'rItemCost', 'rForeignFee', 'rBaseCost', 'rDaigouCost',
     'rShipCost', 'rCardCost', 'rTaxCost', 'rTotalCost',
     'rSellNoShipNoTax', 'rSellNoTax', 'rAfterCardNoTax',
-    'rFinalPrice', 'rRealProfit', 'rRealProfitRate'
+    'rFinalPrice', 'rRealProfit', 'rRealProfitRate',
+    'sFinalPrice', 'sNoTax', 'sTotalCost', 'sProfit', 'sProfitRate'
   ];
   outIds.forEach(id => {
     document.getElementById(id).textContent = '-';
@@ -123,7 +128,7 @@ function resetAll() {
 
 document.addEventListener('DOMContentLoaded', function () {
   // 預設一些常用值（可依需求調整）
-  document.getElementById('rate').value = '22.5';
+  document.getElementById('rate').value = '0.21';
   document.getElementById('foreignFee').value = '1.5';
   document.getElementById('daigouFee').value = '10';
   document.getElementById('profitRate').value = '5';

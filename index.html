@@ -2,9 +2,9 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <title>日圓 → 台幣 代購計算機（進階版）</title>
+  <title>CuiBo價格計算機</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="description" content="日本代購專用進階計算機：匯率、代購費、運費、刷卡、營業稅、自動計算總成本與實際利潤。">
+  <meta name="description" content="CuiBo價格計算機：匯率、代購費、運費、刷卡、營業稅，自動計算總成本與實際利潤。">
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#111827" />
   <link rel="stylesheet" href="style.css" />
@@ -12,14 +12,40 @@
 <body>
   <header class="app-header">
     <div class="app-title">
-      <h1>🇯🇵 日圓 → 台幣 代購計算機</h1>
-      <p class="subtitle">進階版：含代購費、運費、刷卡、營業稅、實際利潤</p>
+      <h1>CuiBo價格計算機</h1>
     </div>
   </header>
 
   <main class="app-main">
+    <!-- 建議售價總覽 -->
+    <section class="card highlight">
+      <h2>建議售價（總覽）</h2>
+      <div class="result-row main-price">
+        <span>建議售價（含稅）</span>
+        <span id="sFinalPrice">-</span>
+      </div>
+      <div class="result-row">
+        <span>建議售價（未稅）</span>
+        <span id="sNoTax">-</span>
+      </div>
+      <div class="divider"></div>
+      <div class="result-row">
+        <span>最終總成本</span>
+        <span id="sTotalCost">-</span>
+      </div>
+      <div class="result-row">
+        <span>實際利潤</span>
+        <span id="sProfit">-</span>
+      </div>
+      <div class="result-row">
+        <span>實際利潤率</span>
+        <span id="sProfitRate">-</span>
+      </div>
+    </section>
+
+    <!-- 商品成本 -->
     <section class="card">
-      <h2>基本資料</h2>
+      <h2>商品成本</h2>
       <div class="field">
         <label for="priceJpy">商品價格（日圓）</label>
         <input id="priceJpy" type="number" inputmode="decimal" placeholder="例如：1500" />
@@ -27,8 +53,8 @@
 
       <div class="field two-col">
         <div>
-          <label for="rate">匯率（TWD / 100 JPY）</label>
-          <input id="rate" type="number" inputmode="decimal" placeholder="例如：22.5" />
+          <label for="rate">匯率（每 1 日圓 = ? 元台幣）</label>
+          <input id="rate" type="number" inputmode="decimal" step="0.001" placeholder="例如：0.21" />
         </div>
         <div>
           <label for="foreignFee">國外交易手續費（%）</label>
@@ -38,7 +64,7 @@
 
       <div class="field two-col">
         <div>
-          <label for="daigouFee">代購費（%）<span class="tag tag-cost">視為成本</span></label>
+          <label for="daigouFee">代購費（%）</label>
           <input id="daigouFee" type="number" inputmode="decimal" placeholder="例如：10" />
         </div>
         <div>
@@ -48,6 +74,7 @@
       </div>
     </section>
 
+    <!-- 運費與金流 -->
     <section class="card">
       <h2>運費與金流</h2>
       <div class="field two-col">
@@ -78,6 +105,7 @@
       </div>
     </section>
 
+    <!-- 成本明細 -->
     <section class="card">
       <h2>成本明細</h2>
       <div class="result-row">
@@ -93,7 +121,7 @@
         <span id="rBaseCost">-</span>
       </div>
       <div class="result-row">
-        <span>代購費（視為成本）</span>
+        <span>代購費</span>
         <span id="rDaigouCost">-</span>
       </div>
       <div class="result-row">
@@ -117,8 +145,9 @@
       </div>
     </section>
 
+    <!-- 售價與實際利潤（詳細） -->
     <section class="card">
-      <h2>售價與實際利潤</h2>
+      <h2>售價與實際利潤（詳細）</h2>
       <div class="result-row">
         <span>含代購＋利潤售價（未稅未含運）</span>
         <span id="rSellNoShipNoTax">-</span>
@@ -152,14 +181,15 @@
       <h2>備註</h2>
       <ul class="note-list">
         <li>％欄位請直接輸入數字，例如 10% 輸入「10」。</li>
-        <li>代購費在本工具中視為「成本」，方便你計算時間與風險都被涵蓋在總成本內。</li>
+        <li>匯率欄位使用「每 1 日圓等於多少台幣」，例如 0.21。</li>
+        <li>代購費會視為成本計入「最終總成本」。</li>
         <li>實際利潤 = 最終售價（含稅） − 最終總成本。</li>
       </ul>
     </section>
   </main>
 
   <footer class="app-footer">
-    <p>Made with ❤️ for 日本代購與自用記帳 · v2</p>
+    <p>Made with ❤️ by CuiBo · v2</p>
   </footer>
 
   <script src="script.js"></script>
