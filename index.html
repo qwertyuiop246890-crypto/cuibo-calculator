@@ -1,206 +1,180 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-  <meta charset="UTF-8" />
-  <title>CuiBo價格計算機</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="description" content="CuiBo價格計算機：匯率、代購費、運費、刷卡、營業稅，自動計算總成本與實際利潤。">
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#111827" />
-  <link rel="stylesheet" href="style.css" />
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Cuibo 代購售價計算機</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#aec1db",
+                        "background-light": "#f6f7f7",
+                        "background-dark": "#15181d",
+                        "cuibo-bg": "#FCF4E9",
+                        "cuibo-text": "#957E6B",
+                        "cuibo-dark": "#957E6B",
+                        "cuibo-blue": "#AEC8DB",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+    </style>
 </head>
-<body>
-  <header class="app-header">
-    <div class="app-title">
-      <h1>CuiBo價格計算機</h1>
-    </div>
-  </header>
-
-  <main class="app-main">
-    <!-- 建議售價總覽 -->
-    <section class="card highlight">
-      <h2>建議售價（總覽）</h2>
-      <div class="result-row main-price">
-        <span>建議售價（含稅）</span>
-        <span id="sFinalPrice">-</span>
-      </div>
-      <div class="result-row">
-        <span>建議售價（未稅）</span>
-        <span id="sNoTax">-</span>
-      </div>
-      <div class="divider"></div>
-      <div class="result-row">
-        <span>最終總成本</span>
-        <span id="sTotalCost">-</span>
-      </div>
-      <div class="result-row">
-        <span>實際利潤</span>
-        <span id="sProfit">-</span>
-      </div>
-      <div class="result-row">
-        <span>實際利潤率</span>
-        <span id="sProfitRate">-</span>
-      </div>
-    </section>
-
-    <!-- 商品成本 -->
-    <section class="card">
-      <h2>商品成本</h2>
-      <div class="field">
-        <label for="priceJpy">商品價格（日圓）</label>
-        <input id="priceJpy" type="number" inputmode="decimal" placeholder="例如：1500" />
-      </div>
-
-      <div class="field two-col">
-        <div>
-          <label for="rate">匯率（每 1 日圓 = ? 元台幣）</label>
-          <input id="rate" type="number" inputmode="decimal" step="0.001" placeholder="例如：0.21" />
-        </div>
-        <div>
-          <label for="foreignFee">國外交易手續費（%）</label>
-          <input id="foreignFee" type="number" inputmode="decimal" placeholder="例如：1.5" />
-        </div>
-      </div>
-
-      <div class="field two-col">
-        <div>
-          <label for="daigouFee">代購費（%）</label>
-          <input id="daigouFee" type="number" inputmode="decimal" placeholder="例如：10" />
-        </div>
-        <div>
-          <label for="profitRate">額外利潤率（%）</label>
-          <input id="profitRate" type="number" inputmode="decimal" placeholder="例如：5" />
-        </div>
-      </div>
-    </section>
-
-    <!-- 運費與金流 -->
-    <section class="card">
-      <h2>運費與金流</h2>
-      <div class="field two-col">
-        <div>
-          <label for="weight">預估重量（g）</label>
-          <input id="weight" type="number" inputmode="decimal" placeholder="例如：300" />
-        </div>
-        <div>
-          <label for="shipPerGram">每克運費（TWD / g）</label>
-          <input id="shipPerGram" type="number" inputmode="decimal" placeholder="例如：0.12" />
-        </div>
-      </div>
-
-      <div class="field two-col">
-        <div>
-          <label for="cardFee">刷卡手續費（%）</label>
-          <input id="cardFee" type="number" inputmode="decimal" placeholder="例如：2.5" />
-        </div>
-        <div>
-          <label for="taxRate">營業稅（%）</label>
-          <input id="taxRate" type="number" inputmode="decimal" placeholder="例如：5" />
-        </div>
-      </div>
-
-      <div class="buttons">
-        <button id="calcBtn">重新計算</button>
-        <button id="resetBtn" class="secondary">清除</button>
-      </div>
-    </section>
-
-    <!-- 成本明細 -->
-    <section class="card">
-      <h2>成本明細</h2>
-      <div class="result-row">
-        <span>商品成本（台幣）</span>
-        <span id="rItemCost">-</span>
-      </div>
-      <div class="result-row">
-        <span>國外交易手續費</span>
-        <span id="rForeignFee">-</span>
-      </div>
-      <div class="result-row">
-        <span>台幣成本（商品＋國外手續費）</span>
-        <span id="rBaseCost">-</span>
-      </div>
-      <div class="result-row">
-        <span>代購費</span>
-        <span id="rDaigouCost">-</span>
-      </div>
-      <div class="result-row">
-        <span>運費（估）</span>
-        <span id="rShipCost">-</span>
-      </div>
-      <div class="result-row">
-        <span>刷卡手續費</span>
-        <span id="rCardCost">-</span>
-      </div>
-      <div class="result-row">
-        <span>營業稅金</span>
-        <span id="rTaxCost">-</span>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="result-row total-strong">
-        <span>🔥 最終總成本（含代購＋運費＋刷卡＋稅）</span>
-        <span id="rTotalCost">-</span>
-      </div>
-    </section>
-
-    <!-- 售價與實際利潤（詳細） -->
-    <section class="card">
-      <h2>售價與實際利潤（詳細）</h2>
-      <div class="result-row">
-        <span>含代購＋利潤售價（未稅未含運）</span>
-        <span id="rSellNoShipNoTax">-</span>
-      </div>
-      <div class="result-row">
-        <span>含運售價（未稅）</span>
-        <span id="rSellNoTax">-</span>
-      </div>
-      <div class="result-row">
-        <span>刷卡後金額（未稅）</span>
-        <span id="rAfterCardNoTax">-</span>
-      </div>
-      <div class="result-row">
-        <span>最終售價（含稅）</span>
-        <span id="rFinalPrice">-</span>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="result-row profit">
-        <span>💰 實際利潤</span>
-        <span id="rRealProfit">-</span>
-      </div>
-      <div class="result-row profit">
-        <span>📈 實際利潤率（相對總成本）</span>
-        <span id="rRealProfitRate">-</span>
-      </div>
-    </section>
-
-    <section class="card small">
-      <h2>備註</h2>
-      <ul class="note-list">
-        <li>％欄位請直接輸入數字，例如 10% 輸入「10」。</li>
-        <li>匯率欄位使用「每 1 日圓等於多少台幣」，例如 0.21。</li>
-        <li>代購費會視為成本計入「最終總成本」。</li>
-        <li>實際利潤 = 最終售價（含稅） − 最終總成本。</li>
-      </ul>
-    </section>
-  </main>
-
-  <footer class="app-footer">
-    <p>Made with ❤️ by CuiBo · v2</p>
-  </footer>
-
-  <script src="script.js"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() {
-        navigator.serviceWorker.register('./sw.js').catch(function(err) {
-          console.log('SW registration failed:', err);
-        });
-      });
-    }
-  </script>
-</body>
-</html>
+<body class="bg-[#FCF4E9] text-[#957E6B] font-display min-h-screen flex flex-col items-center">
+<div class="w-full max-w-[800px] flex flex-col min-h-screen px-4 pb-12 relative">
+<!-- Navbar / Brand -->
+<div class="py-6 flex items-center justify-center">
+<h1 class="text-2xl font-bold tracking-tight flex items-center gap-2">
+<span class="material-symbols-outlined filled">calculate</span>
+                Cuibo 代購售價計算機
+            </h1>
+</div>
+<!-- Sticky Result Header -->
+<div class="sticky top-4 z-50 mb-8 rounded-[15px] bg-[#957E6B] p-6 text-white shadow-xl ring-1 ring-white/20">
+<div class="flex flex-col items-center justify-center gap-2 text-center">
+<p class="text-white/80 text-sm font-medium tracking-wide uppercase">建議售價（含稅）</p>
+<p class="text-4xl font-bold leading-tight tracking-tight">NT$ <span id="final-price">0</span></p>
+<div class="mt-2 flex items-center gap-2 rounded-full bg-white/10 px-4 py-1">
+<span class="material-symbols-outlined text-[18px]">savings</span>
+<p class="text-sm font-medium">實際淨利 NT$ <span id="net-profit">0</span></p>
+</div>
+</div>
+</div>
+<!-- Form Content -->
+<div class="flex flex-col gap-8">
+<!-- Product Info Section -->
+<div class="space-y-4">
+<div class="flex items-center gap-2 border-b border-[#957E6B]/20 pb-2">
+<span class="material-symbols-outlined text-[#957E6B]">inventory_2</span>
+<h3 class="text-[#957E6B] text-lg font-bold leading-tight">商品資訊</h3>
+</div>
+<div class="flex flex-col">
+<label class="mb-2 text-base font-medium text-[#957E6B]">商品名稱</label>
+<input class="w-full rounded-xl border-none bg-white p-4 text-[#957E6B] text-base shadow-sm placeholder:text-[#957E6B]/40 focus:outline-none focus:ring-2 focus:ring-[#AEC8DB]" placeholder="輸入商品名稱（選填）..." type="text"/>
+</div>
+</div>
+<!-- Procurement Info Section -->
+<div class="space-y-4">
+<div class="flex items-center gap-2 border-b border-[#957E6B]/20 pb-2">
+<span class="material-symbols-outlined text-[#957E6B]">shopping_cart</span>
+<h3 class="text-[#957E6B] text-lg font-bold leading-tight">採購資訊</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="flex flex-col">
+<label class="mb-2 text-base font-medium text-[#957E6B]">商品國外價格</label>
+<div class="relative">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#957E6B]/60 material-symbols-outlined text-[20px]">payments</span>
+<input class="w-full rounded-xl border-none bg-white py-4 pl-12 pr-4 text-[#957E6B] text-base shadow-sm placeholder:text-[#957E6B]/40 focus:outline-none focus:ring-2 focus:ring-[#AEC8DB]" placeholder="0" step="0.01" type="number"/>
+</div>
+</div>
+<div class="flex flex-col">
+<label class="mb-2 text-base font-medium text-[#957E6B]">買手代購費 (%)</label>
+<div class="relative">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#957E6B]/60 material-symbols-outlined text-[20px]">percent</span>
+<input class="w-full rounded-xl border-none bg-white py-4 pl-12 pr-4 text-[#957E6B] text-base shadow-sm placeholder:text-[#957E6B]/40 focus:outline-none focus:ring-2 focus:ring-[#AEC8DB]" placeholder="0" step="0.01" type="number"/>
+</div>
+</div>
+<div class="flex flex-col">
+<label class="mb-2 text-base font-medium text-[#957E6B]">匯率</label>
+<div class="relative">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#957E6B]/60 material-symbols-outlined text-[20px]">currency_exchange</span>
+<input class="w-full rounded-xl border-none bg-white py-4 pl-12 pr-4 text-[#957E6B] text-base shadow-sm placeholder:text-[#957E6B]/40 focus:outline-none focus:ring-2 focus:ring-[#AEC8DB]" placeholder="0" step="0.01" type="number"/>
+</div>
+</div>
+<div class="flex flex-col">
+<label class="mb-2 text-base font-medium text-[#957E6B]">國外交易手續費 (%)</label>
+<div class="relative">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#957E6B]/60 material-symbols-outlined text-[20px]">credit_card</span>
+<input class="w-full rounded-xl border-none bg-white py-4 pl-12 pr-4 text-[#957E6B] text-base shadow-sm placeholder:text-[#957E6B]/40 focus:outline-none focus:ring-2 focus:ring-[#AEC8DB]" placeholder="0" step="0.01" type="number"/>
+</div>
+</div>
+</div>
+</div>
+<!-- Logistics Section -->
+<div class="space-y-4">
+<div class="flex items-center gap-2 border-b border-[#957E6B]/20 pb-2">
+<span class="material-symbols-outlined text-[#957E6B]">local_shipping</span>
+<h3 class="text-[#957E6B] text-lg font-bold leading-tight">物流</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="flex flex-col">
+<label class="mb-2 text-base font-medium text-[#957E6B]">預估重量 (g)</label>
+<div class="relative">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#957E6B]/60 material-symbols-outlined text-[20px]">weight</span>
+<input class="w-full rounded-xl border-none bg-white py-4 pl-12 pr-4 text-[#957E6B] text-base shadow-sm placeholder:text-[#957E6B]/40 focus:outline-none focus:ring-2 focus:ring-[#AEC8DB]" placeholder="0" type="number"/>
+</div>
+</div>
+<div class="flex flex-col">
+<label class="mb-2 text-base font-medium text-[#957E6B]">每克運費 (TWD)</label>
+<div class="relative">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#957E6B]/60 material-symbols-outlined text-[20px]">flight</span>
+<input class="w-full rounded-xl border-none bg-white py-4 pl-12 pr-4 text-[#957E6B] text-base shadow-sm placeholder:text-[#957E6B]/40 focus:outline-none focus:ring-2 focus:ring-[#AEC8DB]" placeholder="0" step="0.01" type="number"/>
+</div>
+</div>
+</div>
+</div>
+<!-- Costs & Profit Section -->
+<div class="space-y-4">
+<div class="flex items-center gap-2 border-b border-[#957E6B]/20 pb-2">
+<span class="material-symbols-outlined text-[#957E6B]">account_balance_wallet</span>
+<h3 class="text-[#957E6B] text-lg font-bold leading-tight">費用與利潤</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="flex flex-col">
+<label class="mb-2 text-base font-medium text-[#957E6B]">額外利潤率 (%)</label>
+<div class="relative">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#957E6B]/60 material-symbols-outlined text-[20px]">trending_up</span>
+<input class="w-full rounded-xl border-none bg-white py-4 pl-12 pr-4 text-[#957E6B] text-base shadow-sm placeholder:text-[#957E6B]/40 focus:outline-none focus:ring-2 focus:ring-[#AEC8DB]" placeholder="0" step="0.01" type="number"/>
+</div>
+</div>
+<div class="flex flex-col">
+<label class="mb-2 text-base font-medium text-[#957E6B]">客戶刷卡手續費 (%)</label>
+<div class="relative">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#957E6B]/60 material-symbols-outlined text-[20px]">add_card</span>
+<input class="w-full rounded-xl border-none bg-white py-4 pl-12 pr-4 text-[#957E6B] text-base shadow-sm placeholder:text-[#957E6B]/40 focus:outline-none focus:ring-2 focus:ring-[#AEC8DB]" placeholder="0" step="0.01" type="number"/>
+</div>
+</div>
+<div class="flex flex-col md:col-span-2">
+<label class="mb-2 text-base font-medium text-[#957E6B]">營業稅 (%)</label>
+<div class="relative">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#957E6B]/60 material-symbols-outlined text-[20px]">receipt_long</span>
+<input class="w-full rounded-xl border-none bg-white py-4 pl-12 pr-4 text-[#957E6B] text-base shadow-sm placeholder:text-[#957E6B]/40 focus:outline-none focus:ring-2 focus:ring-[#AEC8DB]" placeholder="0" step="0.01" type="number"/>
+</div>
+</div>
+</div>
+</div>
+<!-- Action Button -->
+<div class="pt-4 pb-10">
+<button class="w-full rounded-[12px] bg-[#AEC8DB] py-4 text-center text-lg font-bold text-white shadow-md transition duration-200 hover:bg-[#9bbad3] hover:shadow-lg active:scale-[0.99] flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">save</span>
+                    計算並儲存
+                </button>
+<p class="mt-4 text-center text-sm text-[#957E6B]/60">
+                    點擊按鈕後將自動保存至 Google 試算表
+                </p>
+</div>
+</div>
+</div>
+</body></html>
