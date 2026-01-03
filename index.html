@@ -1,180 +1,220 @@
 <!DOCTYPE html>
-
-<html class="light" lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Cuibo 代購售價計算機</title>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Cuibo 代購售價計算機 - 試算表同步版</title>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <script>
         tailwind.config = {
-            darkMode: "class",
             theme: {
                 extend: {
                     colors: {
-                        "primary": "#aec1db",
-                        "background-light": "#f6f7f7",
-                        "background-dark": "#15181d",
-                        "cuibo-bg": "#FCF4E9",
-                        "cuibo-text": "#957E6B",
-                        "cuibo-dark": "#957E6B",
-                        "cuibo-blue": "#AEC8DB",
+                        "cb-bg": "#FCF4E9",     
+                        "cb-text": "#957E6B",   
+                        "cb-btn": "#AEC8DB",    
+                        "cb-result": "#957E6B", 
                     },
-                    fontFamily: {
-                        "display": ["Manrope", "sans-serif"]
-                    },
-                    borderRadius: { "DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px" },
+                    fontFamily: { "display": ["Manrope", "sans-serif"] }
                 },
             },
         }
     </script>
-<style>
-        /* Hide scrollbar for Chrome, Safari and Opera */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        /* Hide scrollbar for IE, Edge and Firefox */
-        .no-scrollbar {
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;  /* Firefox */
-        }
+    <style>
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .sticky-header { position: sticky; top: 1rem; z-index: 50; }
+        input:focus { background-color: #fff !important; }
+        .input-card { background-color: rgba(255, 255, 255, 0.4); }
     </style>
 </head>
-<body class="bg-[#FCF4E9] text-[#957E6B] font-display min-h-screen flex flex-col items-center">
-<div class="w-full max-w-[800px] flex flex-col min-h-screen px-4 pb-12 relative">
-<!-- Navbar / Brand -->
-<div class="py-6 flex items-center justify-center">
-<h1 class="text-2xl font-bold tracking-tight flex items-center gap-2">
-<span class="material-symbols-outlined filled">calculate</span>
-                Cuibo 代購售價計算機
+<body class="bg-cb-bg text-cb-text font-display min-h-screen px-4 pb-12">
+    <div class="max-w-[600px] mx-auto">
+        <!-- 頂部標題 -->
+        <div class="py-8 text-center">
+            <h1 class="text-2xl font-bold flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined">analytics</span>
+                Cuibo 試算表記錄系統
             </h1>
-</div>
-<!-- Sticky Result Header -->
-<div class="sticky top-4 z-50 mb-8 rounded-[15px] bg-[#957E6B] p-6 text-white shadow-xl ring-1 ring-white/20">
-<div class="flex flex-col items-center justify-center gap-2 text-center">
-<p class="text-white/80 text-sm font-medium tracking-wide uppercase">建議售價（含稅）</p>
-<p class="text-4xl font-bold leading-tight tracking-tight">NT$ <span id="final-price">0</span></p>
-<div class="mt-2 flex items-center gap-2 rounded-full bg-white/10 px-4 py-1">
-<span class="material-symbols-outlined text-[18px]">savings</span>
-<p class="text-sm font-medium">實際淨利 NT$ <span id="net-profit">0</span></p>
-</div>
-</div>
-</div>
-<!-- Form Content -->
-<div class="flex flex-col gap-8">
-<!-- Product Info Section -->
-<div class="space-y-4">
-<div class="flex items-center gap-2 border-b border-[#957E6B]/20 pb-2">
-<span class="material-symbols-outlined text-[#957E6B]">inventory_2</span>
-<h3 class="text-[#957E6B] text-lg font-bold leading-tight">商品資訊</h3>
-</div>
-<div class="flex flex-col">
-<label class="mb-2 text-base font-medium text-[#957E6B]">商品名稱</label>
-<input class="w-full rounded-xl border-none bg-white p-4 text-[#957E6B] text-base shadow-sm placeholder:text-[#957E6B]/40 focus:outline-none focus:ring-2 focus:ring-[#AEC8DB]" placeholder="輸入商品名稱（選填）..." type="text"/>
-</div>
-</div>
-<!-- Procurement Info Section -->
-<div class="space-y-4">
-<div class="flex items-center gap-2 border-b border-[#957E6B]/20 pb-2">
-<span class="material-symbols-outlined text-[#957E6B]">shopping_cart</span>
-<h3 class="text-[#957E6B] text-lg font-bold leading-tight">採購資訊</h3>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-<div class="flex flex-col">
-<label class="mb-2 text-base font-medium text-[#957E6B]">商品國外價格</label>
-<div class="relative">
-<span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#957E6B]/60 material-symbols-outlined text-[20px]">payments</span>
-<input class="w-full rounded-xl border-none bg-white py-4 pl-12 pr-4 text-[#957E6B] text-base shadow-sm placeholder:text-[#957E6B]/40 focus:outline-none focus:ring-2 focus:ring-[#AEC8DB]" placeholder="0" step="0.01" type="number"/>
-</div>
-</div>
-<div class="flex flex-col">
-<label class="mb-2 text-base font-medium text-[#957E6B]">買手代購費 (%)</label>
-<div class="relative">
-<span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#957E6B]/60 material-symbols-outlined text-[20px]">percent</span>
-<input class="w-full rounded-xl border-none bg-white py-4 pl-12 pr-4 text-[#957E6B] text-base shadow-sm placeholder:text-[#957E6B]/40 focus:outline-none focus:ring-2 focus:ring-[#AEC8DB]" placeholder="0" step="0.01" type="number"/>
-</div>
-</div>
-<div class="flex flex-col">
-<label class="mb-2 text-base font-medium text-[#957E6B]">匯率</label>
-<div class="relative">
-<span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#957E6B]/60 material-symbols-outlined text-[20px]">currency_exchange</span>
-<input class="w-full rounded-xl border-none bg-white py-4 pl-12 pr-4 text-[#957E6B] text-base shadow-sm placeholder:text-[#957E6B]/40 focus:outline-none focus:ring-2 focus:ring-[#AEC8DB]" placeholder="0" step="0.01" type="number"/>
-</div>
-</div>
-<div class="flex flex-col">
-<label class="mb-2 text-base font-medium text-[#957E6B]">國外交易手續費 (%)</label>
-<div class="relative">
-<span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#957E6B]/60 material-symbols-outlined text-[20px]">credit_card</span>
-<input class="w-full rounded-xl border-none bg-white py-4 pl-12 pr-4 text-[#957E6B] text-base shadow-sm placeholder:text-[#957E6B]/40 focus:outline-none focus:ring-2 focus:ring-[#AEC8DB]" placeholder="0" step="0.01" type="number"/>
-</div>
-</div>
-</div>
-</div>
-<!-- Logistics Section -->
-<div class="space-y-4">
-<div class="flex items-center gap-2 border-b border-[#957E6B]/20 pb-2">
-<span class="material-symbols-outlined text-[#957E6B]">local_shipping</span>
-<h3 class="text-[#957E6B] text-lg font-bold leading-tight">物流</h3>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-<div class="flex flex-col">
-<label class="mb-2 text-base font-medium text-[#957E6B]">預估重量 (g)</label>
-<div class="relative">
-<span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#957E6B]/60 material-symbols-outlined text-[20px]">weight</span>
-<input class="w-full rounded-xl border-none bg-white py-4 pl-12 pr-4 text-[#957E6B] text-base shadow-sm placeholder:text-[#957E6B]/40 focus:outline-none focus:ring-2 focus:ring-[#AEC8DB]" placeholder="0" type="number"/>
-</div>
-</div>
-<div class="flex flex-col">
-<label class="mb-2 text-base font-medium text-[#957E6B]">每克運費 (TWD)</label>
-<div class="relative">
-<span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#957E6B]/60 material-symbols-outlined text-[20px]">flight</span>
-<input class="w-full rounded-xl border-none bg-white py-4 pl-12 pr-4 text-[#957E6B] text-base shadow-sm placeholder:text-[#957E6B]/40 focus:outline-none focus:ring-2 focus:ring-[#AEC8DB]" placeholder="0" step="0.01" type="number"/>
-</div>
-</div>
-</div>
-</div>
-<!-- Costs & Profit Section -->
-<div class="space-y-4">
-<div class="flex items-center gap-2 border-b border-[#957E6B]/20 pb-2">
-<span class="material-symbols-outlined text-[#957E6B]">account_balance_wallet</span>
-<h3 class="text-[#957E6B] text-lg font-bold leading-tight">費用與利潤</h3>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-<div class="flex flex-col">
-<label class="mb-2 text-base font-medium text-[#957E6B]">額外利潤率 (%)</label>
-<div class="relative">
-<span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#957E6B]/60 material-symbols-outlined text-[20px]">trending_up</span>
-<input class="w-full rounded-xl border-none bg-white py-4 pl-12 pr-4 text-[#957E6B] text-base shadow-sm placeholder:text-[#957E6B]/40 focus:outline-none focus:ring-2 focus:ring-[#AEC8DB]" placeholder="0" step="0.01" type="number"/>
-</div>
-</div>
-<div class="flex flex-col">
-<label class="mb-2 text-base font-medium text-[#957E6B]">客戶刷卡手續費 (%)</label>
-<div class="relative">
-<span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#957E6B]/60 material-symbols-outlined text-[20px]">add_card</span>
-<input class="w-full rounded-xl border-none bg-white py-4 pl-12 pr-4 text-[#957E6B] text-base shadow-sm placeholder:text-[#957E6B]/40 focus:outline-none focus:ring-2 focus:ring-[#AEC8DB]" placeholder="0" step="0.01" type="number"/>
-</div>
-</div>
-<div class="flex flex-col md:col-span-2">
-<label class="mb-2 text-base font-medium text-[#957E6B]">營業稅 (%)</label>
-<div class="relative">
-<span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#957E6B]/60 material-symbols-outlined text-[20px]">receipt_long</span>
-<input class="w-full rounded-xl border-none bg-white py-4 pl-12 pr-4 text-[#957E6B] text-base shadow-sm placeholder:text-[#957E6B]/40 focus:outline-none focus:ring-2 focus:ring-[#AEC8DB]" placeholder="0" step="0.01" type="number"/>
-</div>
-</div>
-</div>
-</div>
-<!-- Action Button -->
-<div class="pt-4 pb-10">
-<button class="w-full rounded-[12px] bg-[#AEC8DB] py-4 text-center text-lg font-bold text-white shadow-md transition duration-200 hover:bg-[#9bbad3] hover:shadow-lg active:scale-[0.99] flex items-center justify-center gap-2">
-<span class="material-symbols-outlined">save</span>
-                    計算並儲存
+        </div>
+
+        <!-- 建議售價區塊 (置頂固定) -->
+        <div class="sticky-header mb-8 rounded-2xl bg-cb-result p-6 text-white shadow-2xl ring-1 ring-white/20">
+            <div class="text-center">
+                <p class="text-white/80 text-xs font-medium uppercase tracking-widest">建議售價 (含稅)</p>
+                <p class="text-5xl font-extrabold my-2">NT$ <span id="display-final">0</span></p>
+                <div class="inline-flex items-center gap-2 rounded-full bg-white/10 px-5 py-1.5 mt-2">
+                    <span class="material-symbols-outlined text-[18px]">account_balance_wallet</span>
+                    <p class="text-sm font-semibold">預計淨利 NT$ <span id="display-profit">0</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 輸入區域 -->
+        <div class="flex flex-col gap-8">
+            <!-- 1. 基本資訊 -->
+            <div class="input-card p-5 rounded-2xl border border-cb-text/10 shadow-sm">
+                <label class="block mb-3 text-sm font-bold">🏷️ 商品名稱</label>
+                <input id="product-name" type="text" placeholder="例如：日本代購美妝" 
+                    class="w-full rounded-xl border-none bg-white/80 p-4 text-cb-text shadow-inner focus:ring-2 focus:ring-cb-btn outline-none">
+            </div>
+
+            <!-- 2. 採購成本設定 (對應 Apps Script 欄位) -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="col-span-2 text-sm font-bold border-b border-cb-text/20 pb-1">🛒 採購成本設定</div>
+                <div class="flex flex-col">
+                    <label class="text-xs mb-1 ml-1 opacity-80">外幣原價</label>
+                    <input id="foreign-price" type="number" placeholder="0" oninput="calculate()" class="rounded-xl border-none bg-white/80 p-3 shadow-sm focus:ring-2 focus:ring-cb-btn">
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-xs mb-1 ml-1 opacity-80">代購費 %</label>
+                    <input id="sourcing-fee" type="number" value="10" oninput="calculate()" class="rounded-xl border-none bg-white/80 p-3 shadow-sm focus:ring-2 focus:ring-cb-btn">
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-xs mb-1 ml-1 opacity-80">當前匯率</label>
+                    <input id="rate" type="number" value="0.218" step="0.001" oninput="calculate()" class="rounded-xl border-none bg-white/80 p-3 shadow-sm focus:ring-2 focus:ring-cb-btn">
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-xs mb-1 ml-1 opacity-80">國外刷卡費 %</label>
+                    <input id="intl-fee" type="number" value="1.5" oninput="calculate()" class="rounded-xl border-none bg-white/80 p-3 shadow-sm focus:ring-2 focus:ring-cb-btn">
+                </div>
+            </div>
+
+            <!-- 3. 物流與稅費 -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="col-span-2 text-sm font-bold border-b border-cb-text/20 pb-1">📦 物流、利潤與稅務</div>
+                <div class="flex flex-col">
+                    <label class="text-xs mb-1 ml-1 opacity-80">重量 (g)</label>
+                    <input id="weight" type="number" placeholder="0" oninput="calculate()" class="rounded-xl border-none bg-white/80 p-3 shadow-sm focus:ring-2 focus:ring-cb-btn">
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-xs mb-1 ml-1 opacity-80">每克運費 (TWD)</label>
+                    <input id="shipping-unit" type="number" value="0.3" oninput="calculate()" class="rounded-xl border-none bg-white/80 p-3 shadow-sm focus:ring-2 focus:ring-cb-btn">
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-xs mb-1 ml-1 opacity-80">額外利潤 %</label>
+                    <input id="extra-profit" type="number" value="5" oninput="calculate()" class="rounded-xl border-none bg-white/80 p-3 shadow-sm focus:ring-2 focus:ring-cb-btn">
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-xs mb-1 ml-1 opacity-80">客戶刷卡費 %</label>
+                    <input id="card-fee" type="number" value="2.5" oninput="calculate()" class="rounded-xl border-none bg-white/80 p-3 shadow-sm focus:ring-2 focus:ring-cb-btn">
+                </div>
+                <div class="col-span-2 flex flex-col">
+                    <label class="text-xs mb-1 ml-1 opacity-80">營業稅 %</label>
+                    <input id="tax-rate" type="number" value="5" oninput="calculate()" class="rounded-xl border-none bg-white/80 p-3 shadow-sm focus:ring-2 focus:ring-cb-btn">
+                </div>
+            </div>
+
+            <!-- 儲存按鈕 -->
+            <div class="pt-4">
+                <button onclick="syncToSheet()" id="sync-btn" class="w-full rounded-2xl bg-cb-btn py-5 text-lg font-bold text-white shadow-lg transition active:scale-[0.98] hover:brightness-105 flex items-center justify-center gap-3">
+                    <span class="material-symbols-outlined">cloud_upload</span>
+                    計算並儲存至試算表
                 </button>
-<p class="mt-4 text-center text-sm text-[#957E6B]/60">
-                    點擊按鈕後將自動保存至 Google 試算表
+                <p id="status-msg" class="text-center text-xs mt-4 opacity-60">
+                    資料將自動同步至您的 Google Spreadsheet
                 </p>
-</div>
-</div>
-</div>
-</body></html>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * ⚠️ 重要：請在此處貼上您從 Google Apps Script 部署獲得的網址
+         */
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby-oToiSyf-d_ovpWP9ZbvmWqh8wJwd1T39SOCF2v0NjyFRTpF26AlnGHpJdycAhGWK/exec";
+
+        let lastResult = { price: 0, profit: 0 };
+
+        function calculate() {
+            const getV = (id) => parseFloat(document.getElementById(id).value) || 0;
+
+            // 1. 採購成本 = 外幣原價 * (1 + 代購費%) * 匯率 * (1 + 國外交易手續費%)
+            const procurementTWD = getV('foreign-price') * (1 + getV('sourcing-fee')/100) * getV('rate') * (1 + getV('intl-fee')/100);
+            
+            // 2. 物流成本 = 重量 * 每克運費
+            const logisticsTWD = getV('weight') * getV('shipping-unit');
+            const totalFixedCost = procurementTWD + logisticsTWD;
+            
+            // 3. 反推售價
+            const numerator = totalFixedCost * (1 + getV('extra-profit')/100);
+            const denominator = (1 - getV('card-fee')/100 - getV('tax-rate')/100);
+            
+            const finalPrice = denominator > 0 ? Math.ceil(numerator / denominator) : 0;
+
+            // 4. 計算預計淨利
+            const cardCost = finalPrice * (getV('card-fee')/100);
+            const taxCost = finalPrice * (getV('tax-rate')/100);
+            const netProfit = Math.floor(finalPrice - procurementTWD - logisticsTWD - cardCost - taxCost);
+
+            document.getElementById('display-final').innerText = finalPrice.toLocaleString();
+            document.getElementById('display-profit').innerText = netProfit.toLocaleString();
+
+            lastResult = { price: finalPrice, profit: netProfit };
+        }
+
+        async function syncToSheet() {
+            calculate(); 
+            const btn = document.getElementById('sync-btn');
+            const msg = document.getElementById('status-msg');
+            
+            if (lastResult.price <= 0) {
+                alert("請至少輸入商品價格！");
+                return;
+            }
+
+            if (WEB_APP_URL.includes("【")) {
+                alert("請先在代碼末尾填入您的 Google Apps Script 網址！");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span> 同步中...`;
+
+            const getV = (id) => document.getElementById(id).value;
+            const params = new URLSearchParams();
+            
+            // 對應 Apps Script doPost(e) 中的 data.xxxx
+            params.append('productName', getV('product-name'));
+            params.append('foreignPrice', getV('foreign-price'));
+            params.append('sourcingFee', getV('sourcing-fee'));
+            params.append('rate', getV('rate'));
+            params.append('intlFee', getV('intl-fee'));
+            params.append('weight', getV('weight'));
+            params.append('shippingUnit', getV('shipping-unit'));
+            params.append('extraProfit', getV('extra-profit'));
+            params.append('cardFee', getV('card-fee'));
+            params.append('taxRate', getV('tax-rate'));
+            params.append('finalPrice', lastResult.price);
+            params.append('netProfit', lastResult.profit);
+
+            try {
+                await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: params
+                });
+                
+                btn.innerHTML = `<span class="material-symbols-outlined">task_alt</span> 儲存成功`;
+                btn.style.backgroundColor = "#957E6B"; 
+                msg.innerText = "資料已成功紀錄至試算表最後一列。";
+                
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = `<span class="material-symbols-outlined">cloud_upload</span> 計算並儲存至試算表`;
+                    btn.style.backgroundColor = ""; 
+                }, 3000);
+
+            } catch (error) {
+                console.error(error);
+                alert("同步失敗，請確認網路或 Script 網址。");
+                btn.disabled = false;
+                btn.innerHTML = `重試同步`;
+            }
+        }
+        
+        calculate();
+    </script>
+</body>
+</html>
