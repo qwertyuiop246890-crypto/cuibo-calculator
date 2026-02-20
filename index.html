@@ -24,28 +24,81 @@
             const [jpyPrice, setJpyPrice] = useState(0);
             const [weight, setWeight] = useState(0);
             const [bankRate, setBankRate] = useState(0.215);
-            const [resultA, setResultA] = useState(null);
-            const [resultB, setResultB] = useState(null);
+            
+            // 新增：所有成本的詳細設定與開關狀態
+            const [config, setConfig] = useState({
+                rateMarkup: { label: '匯率加碼緩衝', value: 0.02, enabled: true, unit: '', step: '0.001' },
+                ccFee: { label: '信用卡手續費', value: 1.5, enabled: true, unit: '%', step: '0.1' },
+                sourcingFee: { label: '代購費比例', value: 10, enabled: true, unit: '%', step: '1' },
+                shippingRate: { label: '國際空運費', value: 0.252, enabled: true, unit: 'TWD/g', step: '0.001' },
+                domesticJpy: { label: '日本境內運費', value: 150, enabled: true, unit: 'JPY', step: '10' }
+            });
 
-            const calculatePricing = (isSchemeB = false) => {
-                const finalRate = parseFloat(bankRate) + 0.02;
-                const creditCardFee = 1.015;
+            const [result, setResult] = useState(null);
+
+            // 更新特定成本的數值或開關狀態
+            const updateConfig = (key, field, val) => {
+                setConfig(prev => ({
+                    ...prev,
+                    [key]: { ...prev[key], [field]: val }
+                }));
+            };
+
+            // 快速套用預設情境
+            const applyPreset = (type) => {
+                const isBoss = type === 'boss';
+                setConfig(prev => ({
+                    ...prev,
+                    sourcingFee: { ...prev.sourcingFee, enabled: !isBoss },
+                    shippingRate: { ...prev.shippingRate, enabled: !isBoss },
+                    domesticJpy: { ...prev.domesticJpy, enabled: !isBoss }
+                }));
+            };
+
+            useEffect(() => {
+                if (jpyPrice <= 0 && weight <= 0) {
+                    setResult(null);
+                    return;
+                }
+
+                // 計算匯率
+                const currentRate = parseFloat(bankRate) || 0;
+                const rateMarkup = config.rateMarkup.enabled ? parseFloat(config.rateMarkup.value) : 0;
+                const finalRate = currentRate + rateMarkup;
                 
-                const sourcingFeeRate = isSchemeB ? 0 : 0.1;
-                const shippingRate = isSchemeB ? 0 : 0.252;
-                const domesticJpy = isSchemeB ? 0 : 150;
+                const itemCostJpy = parseFloat(jpyPrice) || 0;
+                const itemWeight = parseFloat(weight) || 0;
+
+                // 1. 商品純台幣原價
+                const pureItemTwd = itemCostJpy * finalRate;
                 
-                const baseCost = (jpyPrice * finalRate * creditCardFee) + (weight * shippingRate);
-                const sourcingFee = jpyPrice * finalRate * sourcingFeeRate;
+                // 2. 信用卡手續費
+                const ccFeeRate = config.ccFee.enabled ? (parseFloat(config.ccFee.value) / 100) : 0;
+                const ccFeeTwd = pureItemTwd * ccFeeRate;
+                
+                // 3. 國際空運費
+                const shippingRate = config.shippingRate.enabled ? parseFloat(config.shippingRate.value) : 0;
+                const shippingTwd = itemWeight * shippingRate;
+                
+                // 4. 代購費
+                const sourcingFeeRate = config.sourcingFee.enabled ? (parseFloat(config.sourcingFee.value) / 100) : 0;
+                const sourcingFeeTwd = pureItemTwd * sourcingFeeRate;
+                
+                // 5. 日本境內運費
+                const domesticJpy = config.domesticJpy.enabled ? parseFloat(config.domesticJpy.value) : 0;
                 const domesticTwd = domesticJpy * finalRate;
-                const totalCost = baseCost + sourcingFee + domesticTwd;
 
+                // 總成本加總
+                const totalCost = pureItemTwd + ccFeeTwd + shippingTwd + sourcingFeeTwd + domesticTwd;
+
+                // 階梯式利潤計算
                 let profit = 0;
                 if (totalCost < 100) profit = 40;
                 else if (totalCost < 200) profit = 60;
                 else if (totalCost < 300) profit = 80;
                 else profit = Math.max(totalCost * 0.2, 100);
 
+                // 逆算邏輯
                 let divisor = 0.89;
                 let tempPrice = (totalCost + profit) / divisor;
                 if (tempPrice < 400) {
@@ -53,6 +106,7 @@
                     tempPrice = (totalCost + profit) / divisor;
                 }
 
+                // 尾數優化處理
                 const ceilPrice = Math.ceil(tempPrice);
                 let finalPrice = ceilPrice;
                 const lastDigit = ceilPrice % 10;
@@ -60,77 +114,148 @@
                     finalPrice = Math.floor(ceilPrice / 10) * 10 + 9;
                 }
 
-                return {
+                setResult({
+                    finalRate,
+                    pureItemTwd: Math.round(pureItemTwd),
+                    ccFeeTwd: Math.round(ccFeeTwd),
+                    shippingTwd: Math.round(shippingTwd),
+                    sourcingFeeTwd: Math.round(sourcingFeeTwd),
+                    domesticTwd: Math.round(domesticTwd),
                     totalCost: Math.round(totalCost),
+                    profit: Math.round(profit),
                     divisor,
-                    finalPrice,
-                    shippingTwd: Math.round(weight * shippingRate)
-                };
-            };
-
-            useEffect(() => {
-                if (jpyPrice > 0 || weight > 0) {
-                    setResultA(calculatePricing(false));
-                    setResultB(calculatePricing(true));
-                }
-            }, [jpyPrice, weight, bankRate]);
+                    finalPrice
+                });
+            }, [jpyPrice, weight, bankRate, config]);
 
             return (
                 <div className="min-h-screen p-4 md:p-8">
                     <div className="max-w-4xl mx-auto">
                         <div className="mb-8 border-l-4 border-indigo-600 pl-4">
-                            <h1 className="text-2xl font-bold text-slate-900">跨境電商精算專家 V3.3</h1>
-                            <p className="text-slate-500 text-sm">老闆親征深度精算版 - 內部簡潔版</p>
+                            <h1 className="text-2xl font-bold text-slate-900">跨境電商精算專家 V3.4</h1>
+                            <p className="text-slate-500 text-sm">全數據解析版 - 支援自訂開關與細項調整</p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                        {/* 基礎輸入區塊 */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                            <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
                                 <label className="block text-sm font-semibold text-slate-600 mb-2">台銀日幣現金賣出匯率</label>
                                 <input type="number" step="0.0001" value={bankRate} onChange={(e) => setBankRate(e.target.value)} className="w-full text-lg font-mono border-b-2 border-slate-200 focus:border-indigo-500 outline-none pb-1" />
-                                <p className="mt-2 text-xs text-indigo-600 font-bold">最終採計：{(parseFloat(bankRate) + 0.02).toFixed(4)}</p>
                             </div>
-                            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                            <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
                                 <label className="block text-sm font-semibold text-slate-600 mb-2">商品原價 (JPY)</label>
                                 <input type="number" value={jpyPrice} onChange={(e) => setJpyPrice(e.target.value)} className="w-full text-lg font-mono border-b-2 border-slate-200 focus:border-indigo-500 outline-none pb-1" />
                             </div>
-                            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                            <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
                                 <label className="block text-sm font-semibold text-slate-600 mb-2">重量 (g)</label>
                                 <input type="number" value={weight} onChange={(e) => setWeight(e.target.value)} className="w-full text-lg font-mono border-b-2 border-slate-200 focus:border-indigo-500 outline-none pb-1" />
                             </div>
                         </div>
 
-                        {resultA && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in duration-500">
-                                <div className="bg-white rounded-2xl shadow-md border-t-4 border-blue-500 overflow-hidden">
-                                    <div className="bg-blue-50 px-6 py-3 border-b border-blue-100 flex justify-between items-center">
-                                        <span className="font-bold text-blue-800">方案 A：標準空運</span>
+                        {/* 詳細設定與開關區塊 */}
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-8">
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 gap-3">
+                                <h2 className="text-lg font-bold text-slate-800">細項成本設定與開關</h2>
+                                <div className="flex gap-2">
+                                    <button onClick={() => applyPreset('standard')} className="px-3 py-1.5 text-sm bg-blue-50 text-blue-700 font-semibold rounded-lg hover:bg-blue-100 transition border border-blue-200">一鍵套用：標準空運</button>
+                                    <button onClick={() => applyPreset('boss')} className="px-3 py-1.5 text-sm bg-orange-50 text-orange-700 font-semibold rounded-lg hover:bg-orange-100 transition border border-orange-200">一鍵套用：老闆親征</button>
+                                </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {Object.entries(config).map(([key, item]) => (
+                                    <div key={key} className={`flex items-center justify-between p-3 rounded-lg border transition-all ${item.enabled ? 'bg-slate-50 border-slate-300' : 'bg-slate-50/50 border-slate-100 opacity-50'}`}>
+                                        <div className="flex items-center gap-3">
+                                            <input 
+                                                type="checkbox" 
+                                                checked={item.enabled} 
+                                                onChange={(e) => updateConfig(key, 'enabled', e.target.checked)} 
+                                                className="w-5 h-5 text-indigo-600 rounded cursor-pointer" 
+                                                id={`check-${key}`} 
+                                            />
+                                            <label htmlFor={`check-${key}`} className="text-sm font-bold text-slate-700 cursor-pointer">{item.label}</label>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <input 
+                                                type="number" 
+                                                step={item.step} 
+                                                value={item.value} 
+                                                onChange={(e) => updateConfig(key, 'value', e.target.value)} 
+                                                disabled={!item.enabled} 
+                                                className="w-20 p-1.5 text-right border rounded-md bg-white text-sm focus:outline-none focus:border-indigo-500 font-mono disabled:bg-slate-100" 
+                                            />
+                                            {item.unit && <span className="text-xs text-slate-500 w-8">{item.unit}</span>}
+                                        </div>
                                     </div>
-                                    <div className="p-6">
-                                        <div className="flex justify-between items-end mb-6">
-                                            <span className="text-slate-500 text-sm font-bold">建議售價</span>
-                                            <span className="text-4xl font-black text-slate-900"><span className="text-xl mr-1 font-normal">TWD</span>{resultA.finalPrice}</span>
-                                        </div>
-                                        <div className="space-y-3 border-t pt-4 text-sm">
-                                            <div className="flex justify-between text-slate-500"><span>總成本</span><span className="font-mono">TWD {resultA.totalCost}</span></div>
-                                            <div className="flex justify-between text-slate-500"><span>國際運費</span><span className="font-mono">TWD {resultA.shippingTwd}</span></div>
-                                            <div className="flex justify-between text-slate-400 italic"><span>逆算參數</span><span className="font-mono">{resultA.divisor}</span></div>
-                                        </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* 計算結果與拆解區塊 */}
+                        {result && (
+                            <div className="bg-white rounded-2xl shadow-lg border-t-4 border-indigo-600 overflow-hidden animate-in fade-in duration-500 max-w-2xl mx-auto">
+                                <div className="bg-indigo-50/50 px-6 py-5 border-b border-indigo-100">
+                                    <div className="text-center">
+                                        <span className="text-slate-500 text-sm font-bold block mb-1">最終建議售價</span>
+                                        <span className="text-5xl font-black text-indigo-900"><span className="text-2xl mr-2 font-bold text-indigo-400">TWD</span>{result.finalPrice}</span>
                                     </div>
                                 </div>
-
-                                <div className="bg-white rounded-2xl shadow-md border-t-4 border-orange-500 overflow-hidden">
-                                    <div className="bg-orange-50 px-6 py-3 border-b border-orange-100 flex justify-between items-center">
-                                        <span className="font-bold text-orange-800">方案 B：老闆親征</span>
-                                    </div>
-                                    <div className="p-6">
-                                        <div className="flex justify-between items-end mb-6">
-                                            <span className="text-slate-500 text-sm font-bold">建議售價</span>
-                                            <span className="text-4xl font-black text-slate-900"><span className="text-xl mr-1 font-normal">TWD</span>{resultB.finalPrice}</span>
+                                
+                                <div className="p-6 md:p-8">
+                                    <h3 className="text-sm font-bold text-slate-800 mb-4 border-b pb-2 flex justify-between">
+                                        <span>成本結構拆解</span>
+                                        <span className="text-indigo-600 font-normal">最終採計匯率：{result.finalRate.toFixed(4)}</span>
+                                    </h3>
+                                    
+                                    <div className="space-y-3 text-sm mb-6">
+                                        <div className="flex justify-between text-slate-700">
+                                            <span>1. 商品原價換算 <span className="text-xs text-slate-400 ml-1">({jpyPrice} JPY)</span></span>
+                                            <span className="font-mono">TWD {result.pureItemTwd}</span>
                                         </div>
-                                        <div className="space-y-3 border-t pt-4 text-sm">
-                                            <div className="flex justify-between text-slate-500"><span>總成本</span><span className="font-mono">TWD {resultB.totalCost}</span></div>
-                                            <div className="flex justify-between text-orange-600 font-bold"><span>國際運費</span><span>免運</span></div>
-                                            <div className="flex justify-between text-slate-400 italic"><span>逆算參數</span><span className="font-mono">{resultB.divisor}</span></div>
+                                        
+                                        {config.ccFee.enabled && (
+                                            <div className="flex justify-between text-slate-600">
+                                                <span>2. 信用卡手續費 <span className="text-xs text-slate-400 ml-1">({config.ccFee.value}%)</span></span>
+                                                <span className="font-mono">TWD {result.ccFeeTwd}</span>
+                                            </div>
+                                        )}
+                                        
+                                        {config.shippingRate.enabled && (
+                                            <div className="flex justify-between text-slate-600">
+                                                <span>3. 國際空運費 <span className="text-xs text-slate-400 ml-1">({weight}g × {config.shippingRate.value})</span></span>
+                                                <span className="font-mono">TWD {result.shippingTwd}</span>
+                                            </div>
+                                        )}
+                                        
+                                        {config.sourcingFee.enabled && (
+                                            <div className="flex justify-between text-slate-600">
+                                                <span>4. 代購費 <span className="text-xs text-slate-400 ml-1">({config.sourcingFee.value}%)</span></span>
+                                                <span className="font-mono">TWD {result.sourcingFeeTwd}</span>
+                                            </div>
+                                        )}
+                                        
+                                        {config.domesticJpy.enabled && (
+                                            <div className="flex justify-between text-slate-600">
+                                                <span>5. 日本境內運費 <span className="text-xs text-slate-400 ml-1">({config.domesticJpy.value} JPY)</span></span>
+                                                <span className="font-mono">TWD {result.domesticTwd}</span>
+                                            </div>
+                                        )}
+                                        
+                                        <div className="flex justify-between items-center text-slate-900 font-black border-t-2 border-slate-200 pt-3 mt-3">
+                                            <span>總成本加總</span>
+                                            <span className="font-mono text-lg">TWD {result.totalCost}</span>
+                                        </div>
+                                    </div>
+
+                                    <h3 className="text-sm font-bold text-slate-800 mb-4 border-b pb-2 mt-8">利潤與定價策略</h3>
+                                    <div className="space-y-3 text-sm bg-slate-50 p-4 rounded-lg">
+                                        <div className="flex justify-between text-emerald-600 font-bold">
+                                            <span>預估實收利潤</span>
+                                            <span className="font-mono">TWD {result.profit}</span>
+                                        </div>
+                                        <div className="flex justify-between text-slate-500">
+                                            <span>定價逆算參數</span>
+                                            <span className="font-mono">{result.divisor}</span>
                                         </div>
                                     </div>
                                 </div>
