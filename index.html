@@ -1,150 +1,165 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>跨境電商精算專家 V3.3 - 內部版</title>
-    <!-- 使用 CDN 載入 React 與 Tailwind -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
-        body { font-family: 'Inter', 'Microsoft JhengHei', sans-serif; }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>內部報價小幫手</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    </style>
 </head>
-<body class="bg-slate-50">
-    <div id="root"></div>
+<body class="bg-[#F2F2F7] min-h-screen flex flex-col">
+    <div id="root" class="flex-grow flex flex-col"></div>
 
-    <script type="text/babel">
-        const { useState, useEffect } = React;
+    <script type="text/babel">
+        const { useState, useEffect } = React;
 
-        const App = () => {
-            const [jpyPrice, setJpyPrice] = useState(0);
-            const [weight, setWeight] = useState(0);
-            const [bankRate, setBankRate] = useState(0.215);
-            const [resultA, setResultA] = useState(null);
-            const [resultB, setResultB] = useState(null);
+        const App = () => {
+            const [jpyPrice, setJpyPrice] = useState('');
+            const [weight, setWeight] = useState('');
+            const [bankRate, setBankRate] = useState(0.215);
+            const [finalPrice, setFinalPrice] = useState(null);
 
-            const calculatePricing = (isSchemeB = false) => {
-                const finalRate = parseFloat(bankRate) + 0.02;
-                const creditCardFee = 1.015;
-                
-                const sourcingFeeRate = isSchemeB ? 0 : 0.1;
-                const shippingRate = isSchemeB ? 0 : 0.252;
-                const domesticJpy = isSchemeB ? 0 : 150;
-                
-                const baseCost = (jpyPrice * finalRate * creditCardFee) + (weight * shippingRate);
-                const sourcingFee = jpyPrice * finalRate * sourcingFeeRate;
-                const domesticTwd = domesticJpy * finalRate;
-                const totalCost = baseCost + sourcingFee + domesticTwd;
+            useEffect(() => {
+                const numJpy = parseFloat(jpyPrice) || 0;
+                const numWeight = parseFloat(weight) || 0;
 
-                let profit = 0;
-                if (totalCost < 100) profit = 40;
-                else if (totalCost < 200) profit = 60;
-                else if (totalCost < 300) profit = 80;
-                else profit = Math.max(totalCost * 0.2, 100);
+                // 若未輸入日幣，則不顯示結果
+                if (numJpy <= 0) {
+                    setFinalPrice(null);
+                    return;
+                }
 
-                let divisor = 0.89;
-                let tempPrice = (totalCost + profit) / divisor;
-                if (tempPrice < 400) {
-                    divisor = 0.92;
-                    tempPrice = (totalCost + profit) / divisor;
-                }
+                // ==========================================
+                // 【底層核心商業邏輯 (員工不可見)】
+                // 以下參數皆鎖定為 V3.3「標準空運」之設定
+                // ==========================================
+                
+                const currentRate = parseFloat(bankRate) || 0;
+                const finalRate = currentRate + 0.02; // 匯率加碼 0.02
+                
+                // 1. 基礎成本計算
+                const pureItemTwd = numJpy * finalRate;
+                const ccFeeTwd = pureItemTwd * 0.015;     // 國外刷卡費 1.5%
+                const shippingTwd = numWeight * 0.252;    // 空運費 0.252 TWD/g
+                const sourcingFeeTwd = pureItemTwd * 0.10;// 代購費 10%
+                const domesticTwd = 150 * finalRate;      // 日本境內運費 150 JPY
 
-                const ceilPrice = Math.ceil(tempPrice);
-                let finalPrice = ceilPrice;
-                const lastDigit = ceilPrice % 10;
-                if (lastDigit !== 0 && lastDigit < 9) {
-                    finalPrice = Math.floor(ceilPrice / 10) * 10 + 9;
-                }
+                const totalCost = pureItemTwd + ccFeeTwd + shippingTwd + sourcingFeeTwd + domesticTwd;
 
-                return {
-                    totalCost: Math.round(totalCost),
-                    divisor,
-                    finalPrice,
-                    shippingTwd: Math.round(weight * shippingRate)
-                };
-            };
+                // 2. 階梯保底利潤
+                let profit = 0;
+                if (totalCost < 100) profit = 40;
+                else if (totalCost < 200) profit = 60;
+                else if (totalCost < 300) profit = 80;
+                else profit = Math.max(totalCost * 0.2, 100);
 
-            useEffect(() => {
-                if (jpyPrice > 0 || weight > 0) {
-                    setResultA(calculatePricing(false));
-                    setResultB(calculatePricing(true));
-                }
-            }, [jpyPrice, weight, bankRate]);
+                // 3. 動態逆算除數 (平台3% + 營業稅5% + 會員緩衝3%)
+                const divisorHigh = 0.89; // >= 400 啟動完整防禦
+                const divisorLow = 0.92;  // < 400 不計會員緩衝
 
-            return (
-                <div className="min-h-screen p-4 md:p-8">
-                    <div className="max-w-4xl mx-auto">
-                        <div className="mb-8 border-l-4 border-indigo-600 pl-4">
-                            <h1 className="text-2xl font-bold text-slate-900">跨境電商精算專家 V3.3</h1>
-                            <p className="text-slate-500 text-sm">老闆親征深度精算版 - 內部簡潔版</p>
-                        </div>
+                let tempPrice = (totalCost + profit) / divisorHigh;
+                
+                if (tempPrice < 400) {
+                    tempPrice = (totalCost + profit) / divisorLow;
+                }
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                                <label className="block text-sm font-semibold text-slate-600 mb-2">台銀日幣現金賣出匯率</label>
-                                <input type="number" step="0.0001" value={bankRate} onChange={(e) => setBankRate(e.target.value)} className="w-full text-lg font-mono border-b-2 border-slate-200 focus:border-indigo-500 outline-none pb-1" />
-                                <p className="mt-2 text-xs text-indigo-600 font-bold">最終採計：{(parseFloat(bankRate) + 0.02).toFixed(4)}</p>
-                            </div>
-                            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                                <label className="block text-sm font-semibold text-slate-600 mb-2">商品原價 (JPY)</label>
-                                <input type="number" value={jpyPrice} onChange={(e) => setJpyPrice(e.target.value)} className="w-full text-lg font-mono border-b-2 border-slate-200 focus:border-indigo-500 outline-none pb-1" />
-                            </div>
-                            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                                <label className="block text-sm font-semibold text-slate-600 mb-2">重量 (g)</label>
-                                <input type="number" value={weight} onChange={(e) => setWeight(e.target.value)} className="w-full text-lg font-mono border-b-2 border-slate-200 focus:border-indigo-500 outline-none pb-1" />
-                            </div>
-                        </div>
+                // 4. 定價尾數修飾 (進位並強迫個位數為 9 或 0)
+                const ceilPrice = Math.ceil(tempPrice);
+                let calculatedPrice = ceilPrice;
+                const lastDigit = ceilPrice % 10;
+                
+                if (lastDigit !== 0 && lastDigit !== 9) {
+                    calculatedPrice = Math.floor(ceilPrice / 10) * 10 + 9;
+                }
 
-                        {resultA && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in duration-500">
-                                <div className="bg-white rounded-2xl shadow-md border-t-4 border-blue-500 overflow-hidden">
-                                    <div className="bg-blue-50 px-6 py-3 border-b border-blue-100 flex justify-between items-center">
-                                        <span className="font-bold text-blue-800">方案 A：標準空運</span>
-                                    </div>
-                                    <div className="p-6">
-                                        <div className="flex justify-between items-end mb-6">
-                                            <span className="text-slate-500 text-sm font-bold">建議售價</span>
-                                            <span className="text-4xl font-black text-slate-900"><span className="text-xl mr-1 font-normal">TWD</span>{resultA.finalPrice}</span>
-                                        </div>
-                                        <div className="space-y-3 border-t pt-4 text-sm">
-                                            <div className="flex justify-between text-slate-500"><span>總成本</span><span className="font-mono">TWD {resultA.totalCost}</span></div>
-                                            <div className="flex justify-between text-slate-500"><span>國際運費</span><span className="font-mono">TWD {resultA.shippingTwd}</span></div>
-                                            <div className="flex justify-between text-slate-400 italic"><span>逆算參數</span><span className="font-mono">{resultA.divisor}</span></div>
-                                        </div>
-                                    </div>
-                                </div>
+                setFinalPrice(calculatedPrice);
+            }, [jpyPrice, weight, bankRate]);
 
-                                <div className="bg-white rounded-2xl shadow-md border-t-4 border-orange-500 overflow-hidden">
-                                    <div className="bg-orange-50 px-6 py-3 border-b border-orange-100 flex justify-between items-center">
-                                        <span className="font-bold text-orange-800">方案 B：老闆親征</span>
-                                    </div>
-                                    <div className="p-6">
-                                        <div className="flex justify-between items-end mb-6">
-                                            <span className="text-slate-500 text-sm font-bold">建議售價</span>
-                                            <span className="text-4xl font-black text-slate-900"><span className="text-xl mr-1 font-normal">TWD</span>{resultB.finalPrice}</span>
-                                        </div>
-                                        <div className="space-y-3 border-t pt-4 text-sm">
-                                            <div className="flex justify-between text-slate-500"><span>總成本</span><span className="font-mono">TWD {resultB.totalCost}</span></div>
-                                            <div className="flex justify-between text-orange-600 font-bold"><span>國際運費</span><span>免運</span></div>
-                                            <div className="flex justify-between text-slate-400 italic"><span>逆算參數</span><span className="font-mono">{resultB.divisor}</span></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            );
-        };
+            return (
+                <div className="flex-grow flex flex-col pb-10">
+                    {/* Header */}
+                    <div className="bg-[#007AFF] pt-14 pb-6 px-6 shadow-md rounded-b-3xl mb-8">
+                        <h1 className="text-2xl font-bold text-white tracking-tight text-center">報價小幫手</h1>
+                        <p className="text-blue-100 text-sm mt-2 text-center font-medium opacity-90">快速精算，一鍵報價</p>
+                    </div>
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+                    <div className="px-5 max-w-sm mx-auto w-full space-y-6 flex-grow">
+                        
+                        {/* 報價結果顯示區 (當有計算結果時顯著放大) */}
+                        <div className={`transition-all duration-500 ease-in-out ${finalPrice ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-4 scale-95 hidden'}`}>
+                            <div className="bg-white rounded-2xl shadow-lg p-6 text-center border-2 border-[#007AFF]/10 relative overflow-hidden">
+                                <div className="absolute top-0 left-0 w-full h-1 bg-[#007AFF]"></div>
+                                <div className="text-sm text-slate-500 font-semibold tracking-wider mb-2 uppercase">對客最終報價</div>
+                                <div className="text-5xl font-extrabold text-[#007AFF] tracking-tight">
+                                    <span className="text-2xl font-semibold mr-1 text-slate-400">NT$</span>
+                                    {finalPrice || 0}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 輸入區塊 */}
+                        <div className="bg-white rounded-[16px] overflow-hidden shadow-sm border border-slate-100/60">
+                            <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
+                                <label className="text-[17px] font-medium text-black">日幣金額</label>
+                                <div className="flex items-center">
+                                    <input 
+                                        type="number" inputMode="decimal" value={jpyPrice} 
+                                        onChange={(e) => setJpyPrice(e.target.value)} 
+                                        className="text-right text-2xl font-bold text-black focus:outline-none w-28 bg-transparent placeholder-slate-200" placeholder="0"
+                                    />
+                                    <span className="text-slate-400 ml-2 font-medium">¥</span>
+                                </div>
+                            </div>
+                            
+                            <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
+                                <label className="text-[17px] font-medium text-black">商品重量</label>
+                                <div className="flex items-center">
+                                    <input 
+                                        type="number" inputMode="decimal" value={weight} 
+                                        onChange={(e) => setWeight(e.target.value)} 
+                                        className="text-right text-2xl font-bold text-black focus:outline-none w-28 bg-transparent placeholder-slate-200" placeholder="0"
+                                    />
+                                    <span className="text-slate-400 ml-2 font-medium">g</span>
+                                </div>
+                            </div>
+
+                            <div className="px-5 py-4 bg-slate-50/50 flex justify-between items-center">
+                                <label className="text-[15px] font-medium text-slate-500">今日台銀賣出</label>
+                                <input 
+                                    type="number" inputMode="decimal" step="0.0001" value={bankRate} 
+                                    onChange={(e) => setBankRate(e.target.value)} 
+                                    className="text-right text-lg font-semibold text-slate-600 focus:outline-none w-24 bg-transparent" 
+                                />
+                            </div>
+                        </div>
+
+                        {/* 狀態提示 */}
+                        {!finalPrice && (
+                            <div className="text-center text-slate-400 text-sm mt-8 animate-pulse">
+                                請輸入日幣金額與重量以產生報價
+                            </div>
+                        )}
+                        
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
 </body>
 </html>
-
-讓我預覽
